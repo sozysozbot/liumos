@@ -14,20 +14,18 @@ constexpr uint64_t kKernelBaseAddr = 0xFFFF'FFFF'0000'0000;
 // @apic.cc
 class LocalAPIC {
  public:
-  LocalAPIC() {
-    uint64_t base_msr = ReadMSR(MSRIndex::kLocalAPICBase);
-    base_addr_ = (base_msr & ((1ULL << MAX_PHY_ADDR_BITS) - 1)) & ~0xfffULL;
-    CPUID cpuid;
-    ReadCPUID(&cpuid, kCPUIDIndexXTopology, 0);
-    id_ = cpuid.edx;
-  }
   uint8_t GetID() { return id_; }
+  void Init(void);
+  enum class RegisterOffset : uint64_t {
+    kLocalAPICID = 0x20,
+    kSVR = 0xF0,
+  };
+  uint32_t ReadRegister(RegisterOffset offset);
+  void WriteRegister(RegisterOffset offset, uint32_t value) {
+    *reinterpret_cast<uint32_t *>(base_addr_ + static_cast<uint64_t>(offset)) = value;
+  }
 
  private:
-  uint32_t* GetRegisterAddr(uint64_t offset) {
-    return (uint32_t*)(base_addr_ + offset);
-  }
-
   uint64_t base_addr_;
   uint8_t id_;
 };
@@ -94,18 +92,32 @@ class GDT {
 
   static constexpr uint64_t kKernelCSIndex = 1;
   static constexpr uint64_t kKernelDSIndex = 2;
+  static constexpr uint64_t kTSS64Index = 3;
 
   static constexpr uint64_t kKernelCSSelector = kKernelCSIndex << 3;
   static constexpr uint64_t kKernelDSSelector = kKernelDSIndex << 3;
-
-  static constexpr uint64_t kNumOfDescriptors = 3;
+  static constexpr uint64_t kTSS64Selector = kTSS64Index << 3;
 
   void Init(void);
   void Print(void);
 
  private:
   GDTR gdtr_;
-  uint64_t descriptors_[kNumOfDescriptors];
+  packed_struct GDTDescriptors{
+    uint64_t null_segment;
+    uint64_t kernel_code_segment;
+    uint64_t kernel_data_segment;
+    packed_struct TSS64 {
+      uint16_t limit_low;
+      uint16_t base_low;
+      uint8_t base_mid_low;
+      uint16_t attr;
+      uint8_t base_mid_high;
+      uint32_t base_high;
+      uint32_t reserved;
+    } task_state_segment;
+    static_assert(sizeof(TSS64) == 16);
+  } descriptors_;
 };
 
 // @generic.h

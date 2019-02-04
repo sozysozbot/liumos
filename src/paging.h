@@ -250,16 +250,16 @@ packed_struct IA_PDPTE {
 };
 
 packed_struct IA_PDPT {
-  static constexpr int kNumOfPDPTE = (1 << 9);
-  static constexpr int kIndexMask = kNumOfPDPTE - 1;
+  static constexpr int kNumOfEntries = (1 << 9);
+  static constexpr int kIndexMask = kNumOfEntries - 1;
   static constexpr int kIndexShift = 30;
-  IA_PDPTE entries[kNumOfPDPTE];
+  IA_PDPTE entries[kNumOfEntries];
   inline int addr2index(uint64_t addr) {
     return (addr >> kIndexShift) & kIndexMask;
   }
   void Print();
   void ClearMapping() {
-    for (int i = 0; i < kNumOfPDPTE; i++) {
+    for (int i = 0; i < kNumOfEntries; i++) {
       reinterpret_cast<uint64_t*>(entries)[i] = 0;
     }
   }

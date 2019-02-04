@@ -1,13 +1,13 @@
 #include "liumos.h"
 
 void GDT::Init() {
-  descriptors_[0] = 0;
-  descriptors_[kKernelCSIndex] = kDescBitTypeCode | kDescBitPresent |
+  descriptors_.null_segment = 0;
+  descriptors_.kernel_code_segment = kDescBitTypeCode | kDescBitPresent |
                                  kCSDescBitLongMode | kCSDescBitReadable;
-  descriptors_[kKernelDSIndex] =
+  descriptors_.kernel_data_segment =
       kDescBitTypeData | kDescBitPresent | kDSDescBitWritable;
-  gdtr_.base = descriptors_;
-  gdtr_.limit = sizeof(descriptors_) - 1;
+  gdtr_.base = reinterpret_cast<uint64_t *>(&descriptors_);
+  gdtr_.limit = sizeof(GDTDescriptors) - 1;
   WriteGDTR(&gdtr_);
   WriteCSSelector(kKernelCSSelector);
   WriteSSSelector(kKernelDSSelector);

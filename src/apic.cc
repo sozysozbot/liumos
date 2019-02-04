@@ -1,8 +1,31 @@
 #include "liumos.h"
 
+void LocalAPIC::Init(void) {
+    uint64_t base_msr = ReadMSR(MSRIndex::kLocalAPICBase);
+    PutStringAndHex("IA32_APIC_BASE MSR", base_msr);
+
+    base_addr_ = (base_msr & ((1ULL << kMaxPhyAddr) - 1)) & ~0xfffULL;
+
+    PutStringAndHex("Read 0xc000'0000", *reinterpret_cast<uint8_t *>(0xc000'0000));
+    PutStringAndHex("Read SVR", ReadRegister(RegisterOffset::kSVR));
+    PutStringAndHex("Read APIC ID Register", ReadRegister(RegisterOffset::kLocalAPICID));
+
+
+    CPUID cpuid;
+    ReadCPUID(&cpuid, kCPUIDIndexXTopology, 0);
+    id_ = cpuid.edx;
+    PutStringAndHex("APIC ID come from cpuid", cpuid.edx);
+}
+
+uint32_t LocalAPIC::ReadRegister(RegisterOffset offset) {
+  volatile uint32_t *addr = reinterpret_cast<uint32_t *>(base_addr_ + static_cast<uint64_t>(offset));
+  PutStringAndHex("LAPIC ID reg v2p", reinterpret_cast<IA_PML4 *>(ReadCR3())->v2p(reinterpret_cast<uint64_t>(addr)));
+  return *addr;
+}
+
 void SendEndOfInterruptToLocalAPIC() {
   *(uint32_t*)(((ReadMSR(MSRIndex::kLocalAPICBase) &
-                 ((1ULL << MAX_PHY_ADDR_BITS) - 1)) &
+                 ((1ULL << kMaxPhyAddr) - 1)) &
                 ~0xfffULL) +
                0xB0) = 0;
 }

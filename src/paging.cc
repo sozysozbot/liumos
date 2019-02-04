@@ -16,7 +16,9 @@ void IA_PDT::Print() {
     PutHex64(i);
     PutString("]:");
     if (entries[i].IsPage()) {
-      PutString(" 2MB Page\n");
+      PutString(" 2MB Page: ");
+      PutHex64ZeroFilled(entries[i].data);
+      PutString("\n");
       continue;
     }
     PutStringAndHex(" addr", entries[i].GetTableAddr());
@@ -24,14 +26,16 @@ void IA_PDT::Print() {
 }
 
 void IA_PDPT::Print() {
-  for (int i = 0; i < kNumOfPDPTE; i++) {
+  for (int i = 0; i < kNumOfEntries; i++) {
     if (!entries[i].IsPresent())
       continue;
     PutString(" PDPT[");
     PutHex64(i);
     PutString("]:");
     if (entries[i].IsPage()) {
-      PutString("  1GB Page\n");
+      PutString("  1GB Page: ");
+      PutHex64ZeroFilled(entries[i].data);
+      PutString("\n");
       continue;
     }
     PutString("\n");
@@ -41,18 +45,23 @@ void IA_PDPT::Print() {
 }
 
 void IA_PML4::Print() {
+  PutString("PML4Es\n");
   for (int i = 0; i < kNumOfPML4E; i++) {
     if (!entries[i].IsPresent())
       continue;
     PutString("PML4[");
     PutHex64(i);
-    PutString("]:\n");
+    PutString("]: ");
+    PutHex64ZeroFilled(entries[i].data);
+    PutString("\n");
     IA_PDPT* pdpt = entries[i].GetTableAddr();
     pdpt->Print();
   }
+  PutString("PML4Es END\n");
 }
 
 IA_PML4* CreatePageTable() {
+  // Creates page mappings for user process.
   IA_PML4* pml4 = reinterpret_cast<IA_PML4*>(page_allocator->AllocPages(1));
   pml4->ClearMapping();
   pml4->SetTableBaseForAddr(0, direct_map_pdpt,
@@ -118,7 +127,7 @@ void InitPaging() {
   for (size_t i = 0; i < direct_map_1gb_pages; i++) {
     uint64_t page_flags = kPageAttrPresent | kPageAttrWritable;
     if (i == 3) {
-      page_flags |= kPageAttrCacheDisable | kPageAttrWriteThrough;
+      //page_flags |= kPageAttrCacheDisable | kPageAttrWriteThrough;
     }
     direct_map_pdpt->SetPageBaseForAddr((1ULL << 30) * i, (1ULL << 30) * i,
                                         page_flags);
@@ -140,7 +149,6 @@ void InitPaging() {
     kernel_pt->SetPageBaseForAddr(kKernelBaseAddr + (1 << 12) * i,
                                   reinterpret_cast<uint64_t>(page), page_flags);
   }
-  kernel_pml4->Print();
-  PutStringAndHex("CR3", ReadCR3());
   WriteCR3(reinterpret_cast<uint64_t>(kernel_pml4));
+  reinterpret_cast<IA_PML4 *>(ReadCR3())->Print();
 }

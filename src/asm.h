@@ -8,7 +8,6 @@ constexpr uint32_t kCPUID01H_EDXBitAPIC = (1 << 9);
 constexpr uint32_t kCPUID01H_EDXBitMSR = (1 << 5);
 constexpr uint32_t kCPUIDIndexMaxAddr = 0x8000'0008;
 constexpr uint32_t kCPUIDIndexXTopology = 0x0B;
-#define MAX_PHY_ADDR_BITS 36
 #define IO_APIC_BASE_ADDR 0xfec00000
 
 packed_struct CPUID {
@@ -136,6 +135,7 @@ void WriteCSSelector(uint16_t);
 void WriteSSSelector(uint16_t);
 void WriteDataAndExtraSegmentSelectors(uint16_t);
 
+uint64_t ReadCR2(void);
 uint64_t ReadCR3(void);
 void WriteCR3(uint64_t);
 

@@ -34,6 +34,9 @@ void SubTask() {
   uint32_t col = 0xff0000;
   int x = 0;
   int move_width = 128;
+  ClearIntFlag();
+  for(;;);
+  
   while (1) {
     DrawRect(xsize - 20 - move_width, 10, 20 + move_width, 20, 0xffffff);
     DrawRect(xsize - 20 - move_width + x, 10, 20, 20, col);
@@ -255,19 +258,22 @@ void MainForBootProcessor(void* image_handle, EFI::SystemTable* system_table) {
   new (&page_allocator) PhysicalPageAllocator();
   InitMemoryManagement(efi_memory_map);
   InitPaging();
+  PutStringAndHex("new CR3", ReadCR3());
   ExecutionContext root_context(1, NULL, 0, NULL, 0, ReadCR3());
+  PutStringAndHex("root_context", &root_context);
   Scheduler scheduler_(&root_context);
   scheduler = &scheduler_;
 
   ACPI::DetectTables();
 
-  new (&local_apic) LocalAPIC();
+  local_apic.Init();
   Disable8259PIC();
 
   uint64_t local_apic_id = local_apic.GetID();
   PutStringAndHex("LOCAL APIC ID", local_apic_id);
 
   InitIOAPIC(local_apic_id);
+  for(;;);
 
   hpet.Init(
       static_cast<HPET::RegisterSpace*>(ACPI::hpet->base_address.address));
@@ -283,7 +289,7 @@ void MainForBootProcessor(void* image_handle, EFI::SystemTable* system_table) {
   ExecutionContext sub_context(2, SubTask, ReadCSSelector(), sub_context_rsp,
                                ReadSSSelector(),
                                reinterpret_cast<uint64_t>(CreatePageTable()));
-  scheduler->RegisterExecutionContext(&sub_context);
+  //scheduler->RegisterExecutionContext(&sub_context);
 
   TextBox console_text_box;
   while (1) {

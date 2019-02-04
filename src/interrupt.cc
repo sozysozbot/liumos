@@ -48,6 +48,7 @@ extern "C" ContextSwitchRequest* IntHandler(uint64_t intcode,
     Panic("General Protection Fault");
   }
   if (intcode == 0x0E) {
+    PutStringAndHex("CR2", ReadCR2());
     Panic("Page Fault");
   }
   Panic("INTHandler not implemented");
