@@ -140,7 +140,7 @@ void InitPaging() {
     kernel_pt->SetPageBaseForAddr(kKernelBaseAddr + (1 << 12) * i,
                                   reinterpret_cast<uint64_t>(page), page_flags);
   }
-  kernel_pml4->Print();
+  //kernel_pml4->Print();
   PutStringAndHex("CR3", ReadCR3());
   WriteCR3(reinterpret_cast<uint64_t>(kernel_pml4));
 }

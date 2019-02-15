@@ -20,6 +20,8 @@ extern "C" ContextSwitchRequest* IntHandler(uint64_t intcode,
       reinterpret_cast<ExecutionContext*>(kernel_gs_base);
   if (intcode == 0x20) {
     SendEndOfInterruptToLocalAPIC();
+    PutChar('.');
+    return nullptr;
     ExecutionContext* next_context = scheduler->SwitchContext(current_context);
     if (!next_context) {
       // no need to switching context.

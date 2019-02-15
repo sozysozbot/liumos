@@ -153,6 +153,8 @@ void WriteCR3(uint64_t);
 uint64_t CompareAndSwap(uint64_t*, uint64_t);
 void SwapGS(void);
 
+void FlushCacheLine(volatile void *);
+
 void AsmIntHandler03(void);
 void AsmIntHandler0D(void);
 void AsmIntHandler0E(void);

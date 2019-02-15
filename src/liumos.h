@@ -6,6 +6,7 @@
 #include "gdt.h"
 #include "generic.h"
 #include "guid.h"
+#include "hpet.h"
 #include "interrupt.h"
 #include "keyid.h"
 #include "paging.h"
@@ -15,14 +16,17 @@ constexpr uint64_t kKernelBaseAddr = 0xFFFF'FFFF'0000'0000;
 // @apic.cc
 class LocalAPIC {
  public:
-  LocalAPIC();
+  void Init();
   uint8_t GetID() { return id_; }
-
- private:
-  uint32_t* GetRegisterAddr(uint64_t offset) {
-    return (uint32_t*)(base_addr_ + offset);
+  bool ReadISRBit(uint8_t index) {
+    return (*GetRegisterAddr(0x100 + 0x10 * (index >> 5)) >>
+            (index & 0b11111)) &
+           1;
   }
-
+  volatile uint32_t* GetRegisterAddr(uint64_t offset) {
+    return (volatile uint32_t*)(base_addr_ + offset);
+  }
+ private:
   uint64_t base_addr_;
   uint8_t id_;
 };
@@ -39,7 +43,8 @@ void PutChars(const char* s, int n);
 void PutHex64(uint64_t value);
 void PutHex64ZeroFilled(uint64_t value);
 void PutStringAndHex(const char* s, uint64_t value);
-void PutStringAndHex(const char* s, void* value);
+void PutStringAndHex(const char* s, void * value);
+void PutStringAndBoolNames(const char *s, bool cond, const char *true_str, const char *false_str);
 
 // @console_command.cc
 namespace ConsoleCommand {
@@ -106,6 +111,8 @@ class PhysicalPageAllocator;
 extern EFI::MemoryMap efi_memory_map;
 extern PhysicalPageAllocator* page_allocator;
 extern int kMaxPhyAddr;
+extern HPET hpet;
+extern LocalAPIC *bsp_local_apic;
 
 void MainForBootProcessor(void* image_handle, EFI::SystemTable* system_table);
 

@@ -156,6 +156,10 @@ SwapGS:
 	swapgs
 	ret
 
+.global FlushCacheLine
+FlushCacheLine:
+	clflush [rcx]
+	ret
 
 ContextSwitch:
 	// r8: InterruptInfo*

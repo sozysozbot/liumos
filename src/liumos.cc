@@ -98,6 +98,7 @@ void WaitAndProcessCommand(TextBox& tbox) {
   PutString("> ");
   tbox.StartRecording();
   while (1) {
+    StoreIntFlag();
     StoreIntFlagAndHalt();
     // ClearIntFlag();
     while (!keycode_buffer.IsEmpty()) {
@@ -222,8 +223,8 @@ void IdentifyCPU() {
     maxaddr.data = cpuid.eax;
     kMaxPhyAddr = maxaddr.bits.physical_address_bits;
   } else {
-    PutString("CPUID function 80000008H not supported.\n");
-    PutString("Assuming Physical address bits = 36\n");
+    // CPUID function 80000008H not supported.
+    // Assuming Physical address bits = 36
     kMaxPhyAddr = 36;
   }
   PutStringAndHex("kMaxPhyAddr", kMaxPhyAddr);
@@ -233,6 +234,21 @@ void IdentifyCPU() {
   PutStringAndHex("x2APIC ID", cpuid.edx);
 }
 
+void StartSubContext(){
+  const int kNumOfStackPages = 3;
+  void* sub_context_stack_base = page_allocator->AllocPages(kNumOfStackPages);
+  void* sub_context_rsp = reinterpret_cast<void*>(
+      reinterpret_cast<uint64_t>(sub_context_stack_base) +
+      kNumOfStackPages * (1 << 12));
+  PutStringAndHex("alloc addr", sub_context_stack_base);
+
+  ExecutionContext sub_context(2, SubTask, ReadCSSelector(), sub_context_rsp,
+                               ReadSSSelector(),
+                               reinterpret_cast<uint64_t>(CreatePageTable()));
+  scheduler->RegisterExecutionContext(&sub_context);
+}
+
+LocalAPIC *bsp_local_apic;
 void MainForBootProcessor(void* image_handle, EFI::SystemTable* system_table) {
   LocalAPIC local_apic;
   GDT gdt;
@@ -263,7 +279,8 @@ void MainForBootProcessor(void* image_handle, EFI::SystemTable* system_table) {
 
   ACPI::DetectTables();
 
-  new (&local_apic) LocalAPIC();
+  local_apic.Init();
+  bsp_local_apic = &local_apic;
   Disable8259PIC();
 
   uint64_t local_apic_id = local_apic.GetID();
@@ -274,18 +291,9 @@ void MainForBootProcessor(void* image_handle, EFI::SystemTable* system_table) {
   hpet.Init(
       static_cast<HPET::RegisterSpace*>(ACPI::hpet->base_address.address));
   hpet.SetTimerMs(
-      0, 10, HPET::TimerConfig::kUsePeriodicMode | HPET::TimerConfig::kEnable);
-  const int kNumOfStackPages = 3;
-  void* sub_context_stack_base = page_allocator->AllocPages(kNumOfStackPages);
-  void* sub_context_rsp = reinterpret_cast<void*>(
-      reinterpret_cast<uint64_t>(sub_context_stack_base) +
-      kNumOfStackPages * (1 << 12));
-  PutStringAndHex("alloc addr", sub_context_stack_base);
+      0, 2000, HPET::TimerConfig::kUsePeriodicMode | HPET::TimerConfig::kEnable);
 
-  ExecutionContext sub_context(2, SubTask, ReadCSSelector(), sub_context_rsp,
-                               ReadSSSelector(),
-                               reinterpret_cast<uint64_t>(CreatePageTable()));
-  scheduler->RegisterExecutionContext(&sub_context);
+  //StartSubContext();
 
   TextBox console_text_box;
   while (1) {

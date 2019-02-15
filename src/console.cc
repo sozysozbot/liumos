@@ -110,3 +110,10 @@ void PutStringAndHex(const char* s, uint64_t value) {
 void PutStringAndHex(const char* s, void* value) {
   PutStringAndHex(s, reinterpret_cast<uint64_t>(value));
 }
+
+void PutStringAndBoolNames(const char *s, bool cond, const char *true_str, const char *false_str) {
+  PutString(s);
+  PutString(": ");
+  PutString(cond ? true_str : false_str);
+  PutString("\n");
+}

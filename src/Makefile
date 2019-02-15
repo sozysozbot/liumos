@@ -13,6 +13,7 @@ CLANG_WARNINGS = \
 CXX_STD = -std=c++17
 		
 CFLAGS= \
+		-g \
 		-target x86_64-pc-win32-coff \
 		-fno-stack-protector -fshort-wchar \
 		-mno-red-zone \
@@ -21,6 +22,7 @@ CFLAGS= \
 		-Imusl_supplement -Imusl/include
 
 CXXFLAGS= \
+		-g \
 		-target x86_64-pc-win32-coff \
 		-fno-stack-protector -fshort-wchar \
 		-mno-red-zone \
@@ -28,6 +30,7 @@ CXXFLAGS= \
 		$(CLANG_WARNINGS) $(CXX_STD)
 
 CFLAGS_ELF= \
+		-g \
 		-target x86_64-unknown-none-elf \
 		-fno-stack-protector -fshort-wchar \
 		-mno-red-zone \
@@ -35,6 +38,7 @@ CFLAGS_ELF= \
 		$(CLANG_WARNINGS) $(CXX_STD)
 
 CXXFLAGS_FOR_TEST= \
+		-g \
 		$(CLANG_WARNINGS) $(CXX_STD)
 
 OSX_STD_HEADER_INCLUDE_FLAGS= \
