@@ -8,8 +8,9 @@ class KeyboardController {
   void Init();
   static void IntHandler(uint64_t intcode,
                          uint64_t error_code,
-                         InterruptInfo* info) {
-    last_instance_->IntHandlerSub(intcode, error_code, info);
+                         InterruptInfo* info,
+                         CPUContext* ctx) {
+    last_instance_->IntHandlerSub(intcode, error_code, info, ctx);
   }
   uint16_t ReadKeyID() {
     while (!keycode_buffer_.IsEmpty()) {
@@ -23,7 +24,8 @@ class KeyboardController {
  private:
   void IntHandlerSub(uint64_t intcode,
                      uint64_t error_code,
-                     InterruptInfo* info);
+                     InterruptInfo* info,
+                     CPUContext* ctx);
   uint16_t ParseKeyCode(uint8_t keycode);
   static KeyboardController* last_instance_;
   RingBuffer<uint8_t, 16> keycode_buffer_;

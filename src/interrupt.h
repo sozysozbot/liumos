@@ -9,14 +9,16 @@ packed_struct ContextSwitchRequest {
 
 using InterruptHandler = void (*)(uint64_t intcode,
                                   uint64_t error_code,
-                                  InterruptInfo* info);
+                                  InterruptInfo* info,
+                                  CPUContext* ctx);
 
 class IDT {
  public:
   void Init();
   ContextSwitchRequest* IntHandler(uint64_t intcode,
                                    uint64_t error_code,
-                                   InterruptInfo* info);
+                                   InterruptInfo* info,
+                                   CPUContext* ctx);
   void SetIntHandler(uint64_t intcode, InterruptHandler handler);
 
  private:

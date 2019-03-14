@@ -78,7 +78,10 @@ void KeyboardController::Init() {
   liumos->keyboard_ctrl = this;
 }
 
-void KeyboardController::IntHandlerSub(uint64_t, uint64_t, InterruptInfo*) {
+void KeyboardController::IntHandlerSub(uint64_t,
+                                       uint64_t,
+                                       InterruptInfo*,
+                                       CPUContext*) {
   keycode_buffer_.Push(ReadIOPort8(kIOPortKeyboardData));
   liumos->bsp_local_apic->SendEndOfInterrupt();
 }

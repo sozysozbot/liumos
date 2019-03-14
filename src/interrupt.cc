@@ -1,21 +1,27 @@
 #include "liumos.h"
 #include "scheduler.h"
 
-__attribute__((ms_abi)) extern "C" ContextSwitchRequest*
-IntHandler(uint64_t intcode, uint64_t error_code, InterruptInfo* info) {
-  return liumos->idt->IntHandler(intcode, error_code, info);
+__attribute__((no_caller_saved_registers,
+               ms_abi)) extern "C" ContextSwitchRequest*
+IntHandler(uint64_t intcode,
+           uint64_t error_code,
+           InterruptInfo* info,
+           CPUContext* ctx) {
+  return liumos->idt->IntHandler(intcode, error_code, info, ctx);
 }
 ContextSwitchRequest* IDT::IntHandler(uint64_t intcode,
                                       uint64_t error_code,
-                                      InterruptInfo* info) {
+                                      InterruptInfo* info,
+                                      CPUContext* ctx) {
   if (intcode <= 0xFF && handler_list_[intcode]) {
-    handler_list_[intcode](intcode, error_code, info);
+    handler_list_[intcode](intcode, error_code, info, ctx);
     return nullptr;
   }
   ExecutionContext* current_context = liumos->scheduler->GetCurrentContext();
   if (intcode == 0x20) {
     liumos->bsp_local_apic->SendEndOfInterrupt();
     ExecutionContext* next_context = liumos->scheduler->SwitchContext();
+    PutStringAndHex("Next", next_context);
     if (!next_context) {
       // no need to switching context.
       return nullptr;
@@ -24,10 +30,12 @@ ContextSwitchRequest* IDT::IntHandler(uint64_t intcode,
     context_switch_request_.to = next_context->GetCPUContext();
     return &context_switch_request_;
   }
+  liumos->main_console->ResetCursorPosition();
   PutStringAndHex("Int#", intcode);
-  PutStringAndHex("RIP", info->rip);
+  PutStringAndHex("RIP", ctx->int_info.rip);
   PutStringAndHex("CS Index", info->cs >> 3);
   PutStringAndHex("CS   RPL", info->cs & 3);
+  PutStringAndHex("RSP", info->rsp);
   PutStringAndHex("Error Code", error_code);
   PutStringAndHex("Context#", current_context->GetID());
   if (intcode == 0x08) {
