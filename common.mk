@@ -4,6 +4,7 @@ ifeq ($(OSNAME),Darwin)
 cc_cache.gen.mk : Makefile
 	@LLVM_PREFIX=`brew --prefix llvm` && \
 		echo "CC:=$$LLVM_PREFIX/bin/clang" > $@ && \
+		echo "CXX_SYSTEM_HEADER:=$$LLVM_PREFIX/include/c++/v1/" >> $@ && \
 		echo "LLD_LINK:=$$LLVM_PREFIX/bin/lld-link" >> $@ && \
 		echo "LD_LLD:=$$LLVM_PREFIX/bin/ld.lld" >> $@
 	cat $@

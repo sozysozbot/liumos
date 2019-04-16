@@ -181,6 +181,13 @@ IA_PML4& GetKernelPML4(void) {
   return *liumos->kernel_pml4;
 }
 
+void ForEach4KPages(IA_PML4& pml4_phys,
+                     uint64_t vaddr,
+                     uint64_t byte_size,
+                     std::function<void(int)>& callback) {
+  callback(1);
+}
+
 void FlushDirtyPages(IA_PML4& pml4_phys,
                      uint64_t vaddr,
                      uint64_t byte_size,

@@ -1,6 +1,22 @@
 #pragma once
 
+#include <functional>
+/*
 namespace std {
+
+typedef decltype(nullptr) nullptr_t;
+
+class type_info {
+  public:
+    virtual ~type_info();
+    bool operator==(const type_info& rhs) const noexcept;
+    bool operator!=(const type_info& rhs) const noexcept;
+    bool before(const type_info& rhs) const noexcept;
+    size_t hash_code() const noexcept;
+    const char* name() const noexcept;
+    type_info(const type_info& rhs) = delete; // cannot be copied
+    type_info& operator=(const type_info& rhs) = delete; // cannot be copied
+};
 
 template <class T, T v>
 struct integral_constant {
@@ -61,4 +77,6 @@ struct remove_cv {
 template <class T>
 struct is_void : is_same<void, typename remove_cv<T>::type> {};
 
+
 }  // namespace std
+*/

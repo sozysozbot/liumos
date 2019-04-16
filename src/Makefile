@@ -39,21 +39,20 @@ CFLAGS_LOADER= \
 		-mno-red-zone \
 		-nostdlibinc \
 		$(CLANG_WARNINGS) -std=c11 \
-		-Imusl_supplement -Imusl/include
+		-Imusl_supplement -Imusl/include -I
 
 CXXFLAGS_LOADER= \
 		-target x86_64-pc-win32-coff \
-		-fno-stack-protector -fno-exceptions -fshort-wchar \
+		-fno-stack-protector -fno-exceptions -fshort-wchar -ferror-limit=0 \
 		-mno-red-zone \
-		-nostdlibinc -nostdlib\
+		-nostdlib -Iinclude/ -I$(CXX_SYSTEM_HEADER) \
 		$(CLANG_WARNINGS) $(CXX_STD)
-
 
 CFLAGS_KERNEL= \
 		-target x86_64-unknown-none-elf \
-		-fno-stack-protector -fno-exceptions -fshort-wchar \
+		-fno-stack-protector -fno-exceptions -fshort-wchar -ferror-limit=0 \
 		-mno-red-zone -mstack-alignment=8 \
-		-nostdlibinc \
+		-nostdlib -Iinclude/ -I$(CXX_SYSTEM_HEADER) \
 		$(CLANG_WARNINGS) $(CXX_STD)
 
 CXXFLAGS_FOR_TEST= \
