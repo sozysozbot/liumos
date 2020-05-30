@@ -67,7 +67,7 @@ CXXFLAGS_LOADER= \
 				 $(CLANG_WARNINGS) $(CXX_STD)
 
 CFLAGS_KERNEL= \
-			   -target x86_64-unknown-none-elf \
+			   -g -target x86_64-unknown-none-elf \
 			   -fno-stack-protector -fno-exceptions -fshort-wchar \
 			   -mno-red-zone \
 			   -nostdlib -nostdinc\
@@ -75,7 +75,7 @@ CFLAGS_KERNEL= \
 
 # -Wno-gnu-include-next: avoid warning from third_party/newlib-cygwin_dest/include/limits.h:132:3
 CXXFLAGS_KERNEL= \
-				 -target x86_64-unknown-none-elf \
+				 -g -target x86_64-unknown-none-elf \
 				 -fno-stack-protector -fno-exceptions -fshort-wchar -fno-rtti \
 				 -mno-red-zone -mcmodel=large \
 				 -nostdlibinc \

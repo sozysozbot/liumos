@@ -3,11 +3,11 @@
 // Microsoft x64 calling convention:
 //   args: rcx, rdx, r8, r9
 //   callee-saved: RBX, RBP, RDI, RSI, RSP, R12, R13, R14, R15
-//   caller-saved: RAX, RCX, RDX, R8, R9, R10, R11
+//   caller-saved(will be broken after call): RAX, RCX, RDX, R8, R9, R10, R11
 // System V AMD64 ABI:
 //   args: RDI, RSI, RDX, RCX, R8, R9
 //   callee-saved: RBX, RBP, R12, R13, R14, R15
-//   caller-saved: otherwise
+//   caller-saved(will be broken after call): otherwise
 // Linux kernel x86-64 syscall:
 //   idx: RAX
 //   args: RDI, RSI, RDX, R10, R8, R9

@@ -9,8 +9,15 @@ constexpr uint64_t kArchSetFS = 0x1002;
 // constexpr uint64_t kArchGetFS = 0x1003;
 // constexpr uint64_t kArchGetGS = 0x1004;
 
+__attribute__((ms_abi)) extern "C" uint64_t GetCurrentKernelStack(void) {
+  ExecutionContext& ctx =
+      liumos->scheduler->GetCurrentProcess().GetExecutionContext();
+  return ctx.GetKernelRSP();
+}
+
 __attribute__((ms_abi)) extern "C" void SyscallHandler(uint64_t* args) {
-  // This function will be called under exceptions are masked
+  // This function is called under exceptions are masked
+  // Kernel mode stack is used
   uint64_t idx = args[0];
   if (idx == kSyscallIndex_sys_read) {
     const uint64_t fildes = args[1];
@@ -20,10 +27,18 @@ __attribute__((ms_abi)) extern "C" void SyscallHandler(uint64_t* args) {
       PutStringAndHex("fildes", fildes);
       Panic("Only stdin is supported for now.");
     }
+    uint16_t keyid;
     if (nbyte < 1)
       return;
+    do {
+      while ((keyid = liumos->main_console->GetCharWithoutBlocking()) ==
+             KeyID::kNoInput) {
+        StoreIntFlagAndHalt();
+      }
+    } while ((keyid & KeyID::kMaskBreak) || (keyid & KeyID::kMaskExtended));
+    PutStringAndHex("keyid", keyid);
 
-    buf[0] = 'A';
+    buf[0] = keyid & 0xff;
     return;
   }
   if (idx == kSyscallIndex_sys_write) {
@@ -47,9 +62,6 @@ __attribute__((ms_abi)) extern "C" void SyscallHandler(uint64_t* args) {
     const uint64_t exit_code = args[1];
     PutStringAndHex("exit: exit_code", exit_code);
     liumos->scheduler->KillCurrentProcess();
-    ExecutionContext& ctx =
-        liumos->scheduler->GetCurrentProcess().GetExecutionContext();
-    ChangeRSP(ctx.GetKernelRSP());
     for (;;) {
       StoreIntFlagAndHalt();
     };

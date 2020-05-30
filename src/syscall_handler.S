@@ -3,6 +3,7 @@
 // Linux kernel x86-64 syscall:
 //   idx: RAX
 //   args: RDI, RSI, RDX, R10, R8, R9
+.global GetCurrentKernelStack
 .global AsmSyscallHandler
 AsmSyscallHandler:
 	push rcx	// Saved RIP
@@ -23,11 +24,13 @@ AsmSyscallHandler:
 	push rdi
 	push rax
 
-	mov rcx, rsp
 	mov rbp, rsp
 	and rsp, -16
+	call GetCurrentKernelStack
+	mov rsp, rax // Switch stack
+	mov rcx, rbp	// first param: args
 	call SyscallHandler
-	mov rsp, rbp
+	mov rsp, rbp	// This will revert the stack to user
 
 	pop rax
 	pop rdi

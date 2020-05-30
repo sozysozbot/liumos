@@ -68,7 +68,9 @@ static const uint16_t kKeyCodeTableWithShift[0x80] = {
     0x00, 0x00, 0x00, '_', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     '|', 0x00, 0x00};
 
-constexpr uint16_t kKeyScanCodeMaskBreak = 0x80;
+constexpr uint8_t kKeyScanCodeMaskBreak = 0x80;
+constexpr uint16_t kIOPortKeyboardStatus = 0x0064;
+constexpr uint16_t kIOPortKeyboardData = 0x0060;
 
 void KeyboardController::Init() {
   state_shift_ = false;
@@ -79,33 +81,45 @@ void KeyboardController::Init() {
 }
 
 void KeyboardController::IntHandlerSub(uint64_t, InterruptInfo*) {
+  while (!(ReadIOPort8(kIOPortKeyboardStatus) & 1)){
+    asm volatile ("pause":::"memory");
+  };
   keycode_buffer_.Push(ReadIOPort8(kIOPortKeyboardData));
   liumos->bsp_local_apic->SendEndOfInterrupt();
 }
 
-uint16_t KeyboardController::ParseKeyCode(uint8_t keycode) {
-  uint16_t keyid;
-  if (state_shift_) {
+uint16_t KeyCodeToKeyId(uint8_t keycode, bool shifted) {
+  const bool is_break = keycode & kKeyScanCodeMaskBreak;
+  keycode &= ~kKeyScanCodeMaskBreak;
+  uint16_t keyid = 0;
+  if (shifted) {
     keyid = kKeyCodeTableWithShift[keycode];
-    if (!keyid)
+  }
+  if (!keyid) {
       keyid = kKeyCodeTable[keycode];
-  } else {
-    keyid = kKeyCodeTable[keycode];
   }
-
-  if (!keyid)
-    return 0;
-
-  if ('A' <= keyid && keyid <= 'Z' && !state_shift_)
+  if ('A' <= keyid && keyid <= 'Z' && !shifted) {
     keyid += 0x20;
-
-  if (keycode & kKeyScanCodeMaskBreak) {
-    if (keyid == kShiftL || keyid == kShiftR)
-      state_shift_ = false;
-    keyid |= kMaskBreak;
-  } else {
-    if (keyid == kShiftL || keyid == kShiftR)
-      state_shift_ = true;
   }
+  if(is_break){
+    keyid |= KeyID::kMaskBreak;
+  }
+  return keyid;
+}
+
+uint16_t KeyboardController::ParseKeyCode(uint8_t keycode) {
+  const uint16_t keyid = KeyCodeToKeyId(keycode, state_shift_);
+
+  switch(keyid){
+    case kShiftL:
+    case kShiftR:
+      state_shift_ = true;
+      break;
+    case kShiftL | kMaskBreak:
+    case kShiftR | kMaskBreak:
+      state_shift_ = false;
+      break;
+  }
+
   return keyid;
 }

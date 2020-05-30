@@ -53,9 +53,6 @@ void InitGraphics(void);
 void InitDoubleBuffer(void);
 void DrawPPMFile(EFIFile& file, int px, int py);
 
-// @keyboard.cc
-constexpr uint16_t kIOPortKeyboardData = 0x0060;
-
 // @liumos.c
 constexpr int kNumOfRootFiles = 16;
 packed_struct LoaderInfo {
